@@ -94,7 +94,7 @@ void wait_until_idle(const ata_device *device) {
 }
 
 void sector_in(const ata_device *device, void *sector) {
-  insw(PORT_COMMAND(device->channel), sector, BLOCK_SIZE_SECTOR / 2);
+  insw(PORT_DATA(device->channel), sector, BLOCK_SIZE_SECTOR / 2);
 }
 
 bool wait_while_busy(const ata_device *device) {
@@ -240,18 +240,12 @@ void ata_init() {
     ata_channel *channel = &channels[i];
 
     // Set base port address and IRQ
-    switch (i) {
-    case 0:
+    if (i == 0) {
       channel->port_base = PORT_BASE_PRIMARY;
       channel->irq = IRQ_PRIMARY + 0x20;
-      break;
-    case 1:
+    } else {
       channel->port_base = PORT_BASE_SECONDARY;
       channel->irq = IRQ_SECONDARY + 0x20;
-      break;
-
-    default:
-      break;
     }
 
     // Initialize devices.
@@ -266,8 +260,7 @@ void ata_init() {
     register_interrupt_handler(channel->irq, interrupt_handler);
 
     // Reset hardware.
-    kprint("reset\n");
-    reset_channel(channel);
+    // reset_channel(channel);
 
     // Read hard disk identity information.
     for (size_t i = 0; i < N_DEVICES_PER_CHANNEL; i++) {
@@ -275,5 +268,4 @@ void ata_init() {
       ata_identify_device(device);
     }
   }
-  kprint("done\n");
 }
